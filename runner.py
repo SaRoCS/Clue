@@ -1,6 +1,7 @@
-from clue import Clue
-from agent import ClueAgent
+import time
 
+from agent import ClueAgent, ClueIntelligentAgent
+from clue import Clue
 
 num_players = -1
 while num_players < 2 or num_players > 6:
@@ -9,6 +10,7 @@ while num_players < 2 or num_players > 6:
     except ValueError:
         pass
 
+start_time = time.time()
 rounds = 0
 games = 5000
 
@@ -16,7 +18,7 @@ for i in range(games):
     players = []
 
     for i in range(num_players):
-        players.append(ClueAgent(i))
+        players.append(ClueIntelligentAgent(i))
 
     game = Clue(players)
     game.deal()
@@ -24,3 +26,5 @@ for i in range(games):
     rounds += game.play()
 
 print(rounds / games)
+print(game.conclusions)
+print(f"--- {time.time() - start_time} seconds ---")

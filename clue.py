@@ -27,6 +27,8 @@ class Clue:
 
     weapons = ("Candlestick", "Knife", "Lead Pipe", "Revolver", "Rope", "Wrench")
 
+    conclusions = 0
+
     def __init__(self, players):
         self.over = False
         self.players = players
@@ -97,8 +99,8 @@ class Clue:
         # Ask the other players to reply to the guess
         for other in others:
             reply = other.reply(guess)
-            if reply is not None:
+            if reply is not None and guess[1]:
                 player.receive(reply)
-                return False
+                guess[1] = False
         # If no one replied, this is a winning turn
-        return True
+        return guess[1]
