@@ -4,6 +4,8 @@ import random
 class Clue:
     """A game of Clue"""
 
+    DEBUG = True
+
     people = (
         "Miss Scarlett",
         "Colonel Mustard",
@@ -81,8 +83,15 @@ class Clue:
     def play(self):
         """Simulate the game"""
 
+        if self.DEBUG:
+            print("SOLUTION: ", self.solution)
+            for player in self.players:
+                print(f"Player {player.number}: {player.cards}")
+
         # Complete rounds until someone wins
         while not self.over:
+            if self.DEBUG:
+                print("----------NEW ROUND----------")
             self.play_round()
         return self.num_rounds
 
@@ -96,11 +105,29 @@ class Clue:
         # Make a guess
         guess = player.guess()
 
+        if self.DEBUG:
+            print(f"Player {player.number} guessed: {guess}")
+
         # Ask the other players to reply to the guess
+        response = None
         for other in others:
             reply = other.reply(guess)
-            if reply is not None and guess[1]:
+            if reply is not None:
                 player.receive(reply)
-                guess[1] = False
-        # If no one replied, this is a winning turn
-        return guess[1]
+                response = {
+                    "guess": guess,
+                    "guesser": player.number,
+                    "responder": other.number,
+                }
+
+                if self.DEBUG:
+                    print(f"Player {other.number} replied: {reply}")
+                break
+
+        if response is not None:
+            for other in others:
+                if other.__intelligent__:
+                    other.inform(response)
+            return False
+
+        return True

@@ -9,6 +9,8 @@ from clue import Clue
 class ClueAgent:
     """A Clue player with random decision making"""
 
+    __intelligent__ = False
+
     def __init__(self, agent_number):
         self.number = agent_number
         self.cards = None
@@ -43,13 +45,13 @@ class ClueAgent:
         person = random.choice(list(set(Clue.people) - set(self.known_people)))
         room = random.choice(list(set(Clue.rooms) - set(self.known_rooms)))
         weapon = random.choice(list(set(Clue.weapons) - set(self.known_weapons)))
-        return [{"person": person, "room": room, "weapon": weapon}, True]
+        return [person, room, weapon]
 
     def reply(self, guess):
         """Respond to another player's guess"""
 
         # Randomly select a card from ones that match the guess
-        reply_options = [x for x in guess[0].values() if x in self.cards]
+        reply_options = [x for x in guess if x in self.cards]
         try:
             return random.choice(reply_options)
         except IndexError:
@@ -58,6 +60,8 @@ class ClueAgent:
 
 class ClueIntelligentAgent(ClueAgent):
     """A Clue player that tries to make deductions based on other player's guesses"""
+
+    __intelligent__ = True
 
     def __init__(self, agent_number):
         super().__init__(agent_number)
@@ -88,26 +92,14 @@ class ClueIntelligentAgent(ClueAgent):
         self.__update_knowledge()
         return super().guess()
 
-    def reply(self, guess):
-        reply_options = [x for x in guess[0].values() if x in self.cards]
-
-        try:
-            reply = random.choice(reply_options)
-        except IndexError:
-            reply = None
-
-        if guess[1] is True and reply is not None:
-            return reply
-
-        # If no reply is returned add the guess to knowledge
+    def inform(self, response):
+        # Add the guess to knowledge
         self.knowledge = self.__bl.AND(
             self.knowledge,
             self.__bl.NOT(
-                self.__bl.AND(*[self.__bl.Symbol(x) for x in guess[0].values()])
+                self.__bl.AND(*[self.__bl.Symbol(x) for x in response["guess"]])
             ),
         )
-
-        return reply
 
     def __update_knowledge(self):
         # Simplify the logical expression
