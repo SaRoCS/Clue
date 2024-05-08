@@ -13,7 +13,7 @@ class ClueAgent:
 
     def __init__(self, agent_number):
         self.number = agent_number
-        self.cards = None
+        self.cards = []
         self.known_people = None
         self.known_rooms = None
         self.known_weapons = None
@@ -29,8 +29,10 @@ class ClueAgent:
         self.known_rooms = [x for x in cards if x in Clue.rooms]
         self.known_weapons = [x for x in cards if x in Clue.weapons]
 
-    def receive(self, card):
+    def receive(self, reply):
         """Recieve a single card and add it to known cards"""
+
+        card = reply["card"]
 
         if card in Clue.people and card not in self.known_people:
             self.known_people.append(card)
@@ -53,7 +55,7 @@ class ClueAgent:
         # Randomly select a card from ones that match the guess
         reply_options = [x for x in guess if x in self.cards]
         try:
-            return random.choice(reply_options)
+            return {"card": random.choice(reply_options), "player": self.number}
         except IndexError:
             return None
 
@@ -63,7 +65,7 @@ class ClueIntelligentAgent(ClueAgent):
 
     __intelligent__ = True
 
-    def __init__(self, agent_number):
+    def __init__(self, agent_number, num_players):
         super().__init__(agent_number)
         self.__bl = boolean.BooleanAlgebra()
         self.knowledge = self.__bl.AND(
@@ -71,21 +73,29 @@ class ClueIntelligentAgent(ClueAgent):
             self.__bl.OR(*[self.__bl.Symbol(x) for x in Clue.rooms]),
             self.__bl.OR(*[self.__bl.Symbol(x) for x in Clue.weapons]),
         )
+        self.hands = []
+        for _ in range(num_players):
+            self.hands.append([])
 
     def dealt(self, cards):
         super().dealt(cards)
+
+        self.hands[self.number] = cards
+
         # Add dealt cards to knowledge
         for card in cards:
             self.knowledge = self.__bl.AND(
                 self.knowledge, self.__bl.NOT(self.__bl.Symbol(card))
             )
 
-    def receive(self, card):
-        super().receive(card)
+    def receive(self, reply):
+        super().receive(reply)
         # Add card to knowledge
         self.knowledge = self.__bl.AND(
-            self.knowledge, self.__bl.NOT(self.__bl.Symbol(card))
+            self.knowledge, self.__bl.NOT(self.__bl.Symbol(reply["card"]))
         )
+        # Add card to other player's hand
+        self.hands[reply["player"]].append(reply["card"])
 
     def guess(self):
         # Simplify and draw conclusions from knowledge before guessing
@@ -93,6 +103,8 @@ class ClueIntelligentAgent(ClueAgent):
         return super().guess()
 
     def inform(self, response):
+        """Receives information about other players' guesses and who replied to them"""
+
         # Add the guess to knowledge
         self.knowledge = self.__bl.AND(
             self.knowledge,

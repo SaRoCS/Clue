@@ -12,13 +12,13 @@ while num_players < 2 or num_players > 6:
 
 start_time = time.time()
 rounds = 0
-games = 5000
+games = 1
 
 for i in range(games):
     players = []
 
     for i in range(num_players):
-        players.append(ClueIntelligentAgent(i))
+        players.append(ClueIntelligentAgent(i, num_players))
 
     game = Clue(players)
     game.deal()
