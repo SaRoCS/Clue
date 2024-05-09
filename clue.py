@@ -29,7 +29,7 @@ class Clue:
 
     weapons = ("Candlestick", "Knife", "Lead Pipe", "Revolver", "Rope", "Wrench")
 
-    conclusions = 0
+    conclusions = [0, 0]
 
     def __init__(self, players):
         self.over = False
@@ -126,7 +126,7 @@ class Clue:
 
         if response is not None:
             for other in others:
-                if other.__intelligent__:
+                if other.__intelligent__ and other.number != response["responder"]:
                     other.inform(response)
             return False
 
