@@ -164,15 +164,12 @@ class ClueIntelligentAgent(ClueAgent):
             str(x)[1:] for x in knowledge.args if isinstance(x, boolean.boolean.NOT)
         ]
         for literal in literals:
-            if literal in Clue.people and literal not in self.known_people:
+            if literal in Clue.people:
                 self.known_people.add(literal)
-                Clue.conclusions[0] += 1
-            elif literal in Clue.rooms and literal not in self.known_rooms:
+            elif literal in Clue.rooms:
                 self.known_rooms.add(literal)
-                Clue.conclusions[0] += 1
-            elif literal in Clue.weapons and literal not in self.known_weapons:
+            elif literal in Clue.weapons:
                 self.known_weapons.add(literal)
-                Clue.conclusions[0] += 1
 
     def __update_hand_knowledge(self):
         for i, hand in enumerate(self.hands_knowledge):
@@ -190,7 +187,6 @@ class ClueIntelligentAgent(ClueAgent):
                 for card in known:
                     if card not in self.hands[i]:
                         self.hands[i].add(card)
-                        Clue.conclusions[1] += 1
 
 
 class ClueStrategicAgent(ClueIntelligentAgent):

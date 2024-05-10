@@ -4,7 +4,7 @@ import random
 class Clue:
     """A game of Clue"""
 
-    DEBUG = True
+    DEBUG = False
 
     people = (
         "Miss Scarlett",
@@ -28,8 +28,6 @@ class Clue:
     )
 
     weapons = ("Candlestick", "Knife", "Lead Pipe", "Revolver", "Rope", "Wrench")
-
-    conclusions = [0, 0]
 
     def __init__(self, players):
         self.over = False
