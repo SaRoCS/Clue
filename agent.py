@@ -23,35 +23,35 @@ class ClueAgent:
         """Receive starting cards and add them to known cards"""
 
         self.cards = cards
-        self.known_people = [x for x in cards if x in Clue.people]
-        self.known_rooms = [x for x in cards if x in Clue.rooms]
-        self.known_weapons = [x for x in cards if x in Clue.weapons]
+        self.known_people = set(x for x in cards if x in Clue.people)
+        self.known_rooms = set(x for x in cards if x in Clue.rooms)
+        self.known_weapons = set(x for x in cards if x in Clue.weapons)
 
     def receive(self, reply):
         """Recieve a single card and add it to known cards"""
 
         card = reply["card"]
 
-        if card in Clue.people and card not in self.known_people:
-            self.known_people.append(card)
-        elif card in Clue.rooms and card not in self.known_rooms:
-            self.known_rooms.append(card)
-        elif card in Clue.weapons and card not in self.known_weapons:
-            self.known_weapons.append(card)
+        if card in Clue.people:
+            self.known_people.add(card)
+        elif card in Clue.rooms:
+            self.known_rooms.add(card)
+        elif card in Clue.weapons:
+            self.known_weapons.add(card)
 
     def guess(self):
         """Make a random guess from unknown cards"""
 
-        person = random.choice(list(set(Clue.people) - set(self.known_people)))
-        room = random.choice(list(set(Clue.rooms) - set(self.known_rooms)))
-        weapon = random.choice(list(set(Clue.weapons) - set(self.known_weapons)))
-        return [person, room, weapon]
+        person = random.choice(list(set(Clue.people) - self.known_people))
+        room = random.choice(list(set(Clue.rooms) - self.known_rooms))
+        weapon = random.choice(list(set(Clue.weapons) - self.known_weapons))
+        return ([person, room, weapon], self.number)
 
     def reply(self, guess):
         """Respond to another player's guess"""
 
         # Randomly select a card from ones that match the guess
-        reply_options = [x for x in guess if x in self.cards]
+        reply_options = [x for x in guess[0] if x in self.cards]
         try:
             return {"card": random.choice(reply_options), "player": self.number}
         except IndexError:
@@ -165,13 +165,13 @@ class ClueIntelligentAgent(ClueAgent):
         ]
         for literal in literals:
             if literal in Clue.people and literal not in self.known_people:
-                self.known_people.append(literal)
+                self.known_people.add(literal)
                 Clue.conclusions[0] += 1
             elif literal in Clue.rooms and literal not in self.known_rooms:
-                self.known_rooms.append(literal)
+                self.known_rooms.add(literal)
                 Clue.conclusions[0] += 1
             elif literal in Clue.weapons and literal not in self.known_weapons:
-                self.known_weapons.append(literal)
+                self.known_weapons.add(literal)
                 Clue.conclusions[0] += 1
 
     def __update_hand_knowledge(self):
@@ -191,3 +191,35 @@ class ClueIntelligentAgent(ClueAgent):
                     if card not in self.hands[i]:
                         self.hands[i].add(card)
                         Clue.conclusions[1] += 1
+
+
+class ClueStrategicAgent(ClueIntelligentAgent):
+    """A Clue player that tries makes strategic guesses and replies"""
+
+    def __init__(self, agent_number, num_players):
+        super().__init__(agent_number, num_players)
+        self.shown = []
+        for _ in range(num_players):
+            self.shown.append(set())
+
+    def reply(self, guess):
+        # Attempt to minimize exposure of its hand by replying with already shown cards if possible
+
+        # Reorder the hands to have cards previously shown to the guesser at the front so that it
+        # will attempt to show the guesser a card it has already seen
+        shown = self.shown[guess[1] :] + self.shown[: guess[1]]
+        card = None
+
+        for person in shown:
+            if person:
+                card = random.choice(person)
+                break
+        else:
+            # If none of the guessed cards have previously been shown, pick a random card to reveal
+            options = [x for x in guess[0] if x in self.cards]
+            if options:
+                card = random.choice(options)
+
+        if card:
+            return {"card": card, "player": self.number}
+        return None

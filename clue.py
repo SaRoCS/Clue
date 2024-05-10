@@ -92,8 +92,8 @@ class Clue:
         while not self.over:
             if self.DEBUG:
                 print("----------NEW ROUND----------")
-            self.play_round()
-        return self.num_rounds
+            winner = self.play_round()
+        return (self.num_rounds, winner)
 
     def __take_turn(self, player):
         """Simulate a player's turn"""
@@ -115,8 +115,8 @@ class Clue:
             if reply is not None:
                 player.receive(reply)
                 response = {
-                    "guess": guess,
-                    "guesser": player.number,
+                    "guess": guess[0],
+                    "guesser": guess[1],
                     "responder": other.number,
                 }
 
